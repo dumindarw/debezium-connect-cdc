@@ -1,0 +1,4 @@
+postgres/data/
+kafka/logs/
+zookeeper/data/
+zookeeper/datalog/

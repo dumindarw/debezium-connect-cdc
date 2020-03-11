@@ -1,0 +1,72 @@
+version: '3.7'
+
+services:
+
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper
+    volumes:
+      - ./zookeeper/zoo.cfg:/conf/zoo.cfg
+      - ./zookeeper/data:/data
+      - ./zookeeper/datalog:/datalog
+    ports:
+      - 2181:2181
+    networks:
+      - debz-network
+
+  kafka:
+    build: ./kafka
+    image: kafka-build
+    container_name: kafka-server
+    volumes:
+      - ./kafka/server.properties:/usr/local/kafka/config/server.properties
+      - ./kafka/logs:/tmp/kafka-logs
+    ports:
+      - 9092:9092
+    networks:
+      - debz-network
+
+  db:
+    image: postgres
+    restart: always
+    container_name: pgdb
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpwd789
+      POSTGRES_DB: calamitaid
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/postgres.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - 5432:5432
+    networks:
+      - debz-network
+
+  adminer:
+    image: adminer
+    container_name: adminerweb
+    restart: always
+    ports:
+      - 8082:8080
+    networks:
+      - debz-network
+  
+  connect:
+    image: debezium/connect:1.0
+    container_name: connect
+    environment:
+      ADVERTISED_HOST_NAME: kafka
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: my_connect_configs 
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+    ports:
+      - 8083:8083
+    networks:
+      - debz-network
+
+networks:
+  debz-network:
+     external: true
+
